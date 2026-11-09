@@ -8,6 +8,18 @@ import type {
 } from './types'
 import { CATEGORIAS_SEED } from './dados/categoriasSeed'
 import { ROTINA_SEED } from './dados/rotinaSeed'
+import type { AtividadeCarreira } from './dados/carreiraPlanoSeed'
+
+// Plano de carreira importado pelo usuario, guardado so no aparelho.
+// Uma unica linha com o plano inteiro. Sem isso, o app usa o plano de exemplo
+// (generico) que vem no codigo.
+export interface PlanoCarreiraDoc {
+  id?: number
+  atividades: AtividadeCarreira[]
+  inicio: string
+  fim: string
+  importadoEm: string
+}
 
 export class BancoExecucao extends Dexie {
   categorias!: Table<Categoria, number>
@@ -22,6 +34,7 @@ export class BancoExecucao extends Dexie {
   config!: Table<Config, number>
   planoProgresso!: Table<PlanoProgresso, number>
   carreiraProgresso!: Table<CarreiraProgresso, number>
+  carreiraPlano!: Table<PlanoCarreiraDoc, number>
 
   constructor() {
     super('execucao-diaria')
@@ -46,6 +59,11 @@ export class BancoExecucao extends Dexie {
     // Nao toca nas outras nem nos dados ja gravados no aparelho.
     this.version(3).stores({
       carreiraProgresso: '++id, &chave',
+    })
+    // Versao 4, aditiva: so acrescenta a store do plano de carreira importado.
+    // Nao toca nas outras nem nos dados ja gravados no aparelho.
+    this.version(4).stores({
+      carreiraPlano: '++id',
     })
   }
 }

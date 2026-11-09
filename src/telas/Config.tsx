@@ -7,6 +7,7 @@ import { salvarConfig } from '../db'
 import { baixarBackup, restaurarBackup, type Backup } from '../utils/exportar'
 import { EditorRotina } from './EditorRotina'
 import { pedirPermissaoNotificacao, notificacoesSuportadas } from '../logica/notificacoes'
+import { importarPlanoCarreira } from '../logica/planoCarreira'
 
 export function Config({ config, onFechar }: { config: TConfig; onFechar: () => void }) {
   const [rotinaAberta, setRotinaAberta] = useState(false)
@@ -32,6 +33,19 @@ export function Config({ config, onFechar }: { config: TConfig; onFechar: () => 
     }
   }
 
+  async function importarPlano(ev: React.ChangeEvent<HTMLInputElement>) {
+    const f = ev.target.files?.[0]
+    if (!f) return
+    try {
+      const dados = JSON.parse(await f.text())
+      const n = await importarPlanoCarreira(dados)
+      setMsg(`Plano de carreira importado: ${n} atividades. Fica so neste aparelho.`)
+    } catch {
+      setMsg('Nao consegui ler esse arquivo de plano.')
+    }
+    ev.target.value = ''
+  }
+
   if (rotinaAberta) return <EditorRotina onFechar={() => setRotinaAberta(false)} />
 
   return (
@@ -53,6 +67,15 @@ export function Config({ config, onFechar }: { config: TConfig; onFechar: () => 
         <Icon nome="volta" tam={18} /> Importar backup
         <input type="file" accept="application/json" onChange={importar} style={{ display: 'none' }} />
       </label>
+
+      <div className="titulo-secao">Plano de carreira</div>
+      <label className="btn bloco" style={{ cursor: 'pointer' }}>
+        <Icon nome="volta" tam={18} /> Importar meu plano de carreira
+        <input type="file" accept="application/json" onChange={importarPlano} style={{ display: 'none' }} />
+      </label>
+      <div className="mut" style={{ fontSize: 12.5, marginTop: 8, lineHeight: 1.4 }}>
+        Sem importar, o app mostra um plano de exemplo. O seu plano real fica so neste aparelho, nunca no codigo publico.
+      </div>
 
       <div className="titulo-secao">Notificacoes</div>
       {notificacoesSuportadas() ? (

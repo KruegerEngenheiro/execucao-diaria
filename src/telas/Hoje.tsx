@@ -12,7 +12,8 @@ import { Icon } from '../componentes/Icon'
 import { saudacao } from '../logica/insights'
 import { progressoDoDia } from '../logica/progresso'
 import { atividadesDoDia, chaveCarreira } from '../logica/carreiraPlano'
-import { ATIVIDADES_CARREIRA, INICIO_PLANO, FIM_PLANO, LABEL_CATEGORIA, type AtividadeCarreira } from '../dados/carreiraPlanoSeed'
+import { LABEL_CATEGORIA, type AtividadeCarreira } from '../dados/carreiraPlanoSeed'
+import { usePlanoCarreira } from '../logica/planoCarreira'
 import { copiarTexto } from '../utils/clipboard'
 import { agoraMin, dataPorExtenso, nomeDiaLongo, hhmmParaMin } from '../utils/datas'
 import { msDecorridos, relogio, formataDuracaoMs } from '../logica/tempo'
@@ -28,11 +29,12 @@ export function Hoje({ data, irParaPlano }: { data: string; irParaPlano: () => v
   const registros = useLiveQuery(() => registrosDaData(data), [data], [])
   const resultados = useLiveQuery(() => resultadosDaData(data), [data], [])
   const carreiraProg = useLiveQuery(() => db.carreiraProgresso.toArray(), [], [] as CarreiraProgresso[])
+  const planoCarreira = usePlanoCarreira()
 
-  if (!blocos || !tarefas || !registros || !resultados || !carreiraProg) return null
+  if (!blocos || !tarefas || !registros || !resultados || !carreiraProg || !planoCarreira) return null
 
   const feitosCarreira = new Set(carreiraProg.filter((c) => c.feito).map((c) => c.chave))
-  const itensCarreira = atividadesDoDia(data, ATIVIDADES_CARREIRA, INICIO_PLANO, FIM_PLANO)
+  const itensCarreira = atividadesDoDia(data, planoCarreira.atividades, planoCarreira.inicio, planoCarreira.fim)
   const carreiraFeitas = itensCarreira.filter((a) => feitosCarreira.has(chaveCarreira(a.id, data))).length
 
   const minAgora = agoraMin(new Date(agora))

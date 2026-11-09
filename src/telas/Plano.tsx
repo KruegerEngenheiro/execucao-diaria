@@ -8,8 +8,9 @@ import { marcarPlano, marcarCarreira } from '../servicos'
 import type { PlanoProgresso, CarreiraProgresso } from '../types'
 import { CURSOS } from '../dados/planoSeed'
 import {
-  ATIVIDADES_CARREIRA, LABEL_CATEGORIA, LABEL_FREQ, type AtividadeCarreira,
+  LABEL_CATEGORIA, LABEL_FREQ, type AtividadeCarreira,
 } from '../dados/carreiraPlanoSeed'
+import { usePlanoCarreira } from '../logica/planoCarreira'
 import { progressoPlano, porCategoria, chaveCarreira } from '../logica/carreiraPlano'
 import { Icon } from '../componentes/Icon'
 import { Barra } from '../componentes/comuns'
@@ -22,16 +23,17 @@ const ROTULO: Record<string, string> = { 'a-fazer': 'a fazer', fazendo: 'fazendo
 export function Plano() {
   const progresso = useLiveQuery(() => db.planoProgresso.toArray(), [], [] as PlanoProgresso[])
   const carreiraProg = useLiveQuery(() => db.carreiraProgresso.toArray(), [], [] as CarreiraProgresso[])
-  if (!progresso || !carreiraProg) return null
+  const planoCarreira = usePlanoCarreira()
+  if (!progresso || !carreiraProg || !planoCarreira) return null
 
   const mapa = new Map(progresso.map((p) => [p.chave, p.valor]))
   const val = (chave: string) => mapa.get(chave) ?? ''
   const feitosCarreira = new Set(carreiraProg.filter((c) => c.feito).map((c) => c.chave))
   const feitoAtiv = (a: AtividadeCarreira) => feitosCarreira.has(chaveCarreira(a.id, a.data ?? ''))
 
-  const plano = progressoPlano(ATIVIDADES_CARREIRA, feitosCarreira)
+  const plano = progressoPlano(planoCarreira.atividades, feitosCarreira)
   const cursosFeitos = CURSOS.filter((c) => val(c.chave) === 'feito').length
-  const grupos = porCategoria(ATIVIDADES_CARREIRA)
+  const grupos = porCategoria(planoCarreira.atividades)
 
   function ciclaCurso(chave: string) {
     const atual = val(chave) || 'a-fazer'
