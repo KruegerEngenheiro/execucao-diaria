@@ -18,8 +18,10 @@ import { copiarTexto } from '../utils/clipboard'
 import { agoraMin, dataPorExtenso, nomeDiaLongo, hhmmParaMin } from '../utils/datas'
 import { msDecorridos, relogio, formataDuracaoMs } from '../logica/tempo'
 import { ExecutarTarefa } from './ExecutarTarefa'
+import { CardCandidaturasHoje } from './candidaturas/CardHoje'
+import type { SubVagas } from './candidaturas/comum'
 
-export function Hoje({ data, irParaPlano }: { data: string; irParaPlano: () => void }) {
+export function Hoje({ data, irParaPlano, irParaVagas }: { data: string; irParaPlano: () => void; irParaVagas: (s: SubVagas) => void }) {
   const { cor } = useCategorias()
   const agora = useRelogio()
   const [execId, setExecId] = useState<number | null>(null)
@@ -83,6 +85,8 @@ export function Hoje({ data, irParaPlano }: { data: string; irParaPlano: () => v
           {prog.feitas} de {prog.total} atividades do dia, cada uma conta
         </div>
       </div>
+
+      <CardCandidaturasHoje data={data} ir={irParaVagas} />
 
       {itensCarreira.length > 0 && (
         <div className="cartao">

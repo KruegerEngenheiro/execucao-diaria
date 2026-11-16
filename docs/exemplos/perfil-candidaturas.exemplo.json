@@ -1,0 +1,21 @@
+{
+  "perfil": [
+    { "chave": "nome", "rotulo": "Nome completo", "valor": "PREENCHA", "confirmado": false },
+    { "chave": "email", "rotulo": "E-mail", "valor": "PREENCHA", "confirmado": false }
+  ],
+  "respostasBase": [
+    {
+      "chave": "por-que-essa-vaga",
+      "rotulo": "Por que essa vaga",
+      "pergunta": "Why this role?",
+      "textoPt": "PREENCHA com texto verdadeiro",
+      "textoEn": "FILL IN with true text",
+      "confirmado": false,
+      "fonte": "PREENCHA"
+    }
+  ],
+  "curriculos": [
+    { "chave": "EN-internacional", "versao": "PREENCHA", "arquivo": "PREENCHA.docx", "formato": "DOCX" },
+    { "chave": "PT-brasil", "versao": "PREENCHA", "arquivo": "PREENCHA.docx", "formato": "DOCX" }
+  ]
+}

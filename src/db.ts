@@ -5,6 +5,7 @@ import Dexie, { type Table } from 'dexie'
 import type {
   Categoria, Rotina, Excecao, RegistroBloco, Tarefa, Execucao,
   Resultado, Meta, ResumoDiario, Config, PlanoProgresso, CarreiraProgresso,
+  Vaga, Candidatura, EventoCandidatura, RespostaBase, Curriculo, PerfilProfissional, LogAcao,
 } from './types'
 import { CATEGORIAS_SEED } from './dados/categoriasSeed'
 import { ROTINA_SEED } from './dados/rotinaSeed'
@@ -35,6 +36,13 @@ export class BancoExecucao extends Dexie {
   planoProgresso!: Table<PlanoProgresso, number>
   carreiraProgresso!: Table<CarreiraProgresso, number>
   carreiraPlano!: Table<PlanoCarreiraDoc, number>
+  vagas!: Table<Vaga, number>
+  candidaturas!: Table<Candidatura, number>
+  eventosCandidatura!: Table<EventoCandidatura, number>
+  respostasBase!: Table<RespostaBase, number>
+  curriculos!: Table<Curriculo, number>
+  perfilProfissional!: Table<PerfilProfissional, number>
+  logAcoes!: Table<LogAcao, number>
 
   constructor() {
     super('execucao-diaria')
@@ -65,6 +73,16 @@ export class BancoExecucao extends Dexie {
     this.version(4).stores({
       carreiraPlano: '++id',
     })
+    // Versao 5, aditiva: modulo de candidaturas. So acrescenta stores novas.
+    this.version(5).stores({
+      vagas: '++id, &chaveDedup, status, plataforma, publicadoEm, score',
+      candidaturas: '++id, vagaId, status, enviadaEm, &idempotencyKey',
+      eventosCandidatura: '++id, candidaturaId, tipo, em',
+      respostasBase: '++id, &chave',
+      curriculos: '++id, &chave',
+      perfilProfissional: '++id',
+      logAcoes: '++id, em, tipo',
+    })
   }
 }
 
@@ -80,7 +98,7 @@ export async function semearSeNecessario(): Promise<void> {
     return
   }
 
-  await db.transaction('rw', db.categorias, db.rotinas, db.config, async () => {
+  await db.transaction('rw', db.categorias, db.rotinas, db.config, db.curriculos, async () => {
     const temCategorias = await db.categorias.count()
     if (temCategorias === 0) {
       await db.categorias.bulkAdd(CATEGORIAS_SEED as Categoria[])
@@ -91,6 +109,16 @@ export async function semearSeNecessario(): Promise<void> {
       let ordem = 0
       const comOrdem = ROTINA_SEED.map((r) => ({ ...r, ordem: ordem++ }))
       await db.rotinas.bulkAdd(comOrdem as Rotina[])
+    }
+
+    // Referencia aos 2 curriculos reais (so a estrutura, sem dado pessoal). O sistema
+    // escolhe entre eles; nao cria curriculo novo.
+    if ((await db.curriculos.count()) === 0) {
+      const agora = Date.now()
+      await db.curriculos.bulkAdd([
+        { chave: 'EN-internacional', rotulo: 'Curriculo internacional (ingles)', idioma: 'en', atualizadoEm: agora },
+        { chave: 'PT-brasil', rotulo: 'Curriculo Brasil (portugues)', idioma: 'pt', atualizadoEm: agora },
+      ])
     }
 
     const temConfig = await db.config.count()

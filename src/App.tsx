@@ -9,16 +9,19 @@ import { Agenda } from './telas/Agenda'
 import { Historico } from './telas/Historico'
 import { Metas } from './telas/Metas'
 import { Plano } from './telas/Plano'
+import { Vagas } from './telas/Vagas'
+import type { SubVagas } from './telas/candidaturas/comum'
 import { Config } from './telas/Config'
 import { FormTarefa } from './componentes/FormTarefa'
 import { hojeISO } from './utils/datas'
 
-type Aba = 'hoje' | 'agenda' | 'plano' | 'metas' | 'historico'
+type Aba = 'hoje' | 'agenda' | 'plano' | 'vagas' | 'metas' | 'historico'
 
 const ABAS: { id: Aba; icone: string; rotulo: string }[] = [
   { id: 'hoje', icone: 'hoje', rotulo: 'Hoje' },
   { id: 'agenda', icone: 'agenda', rotulo: 'Agenda' },
   { id: 'plano', icone: 'plano', rotulo: 'Plano' },
+  { id: 'vagas', icone: 'vagas', rotulo: 'Vagas' },
   { id: 'metas', icone: 'metas', rotulo: 'Metas' },
   { id: 'historico', icone: 'historico', rotulo: 'Historico' },
 ]
@@ -28,6 +31,7 @@ export default function App() {
   const [dataAgenda, setDataAgenda] = useState(hojeISO())
   const [novaTarefa, setNovaTarefa] = useState(false)
   const [config, setConfig] = useState(false)
+  const [subVagas, setSubVagas] = useState<SubVagas>('resumo')
 
   const cfg = useLiveQuery(() => getConfig(), [])
   useTema(cfg?.tema)
@@ -37,19 +41,23 @@ export default function App() {
   return (
     <div className="app">
       <div className="conteudo">
-        {(aba === 'hoje' || aba === 'agenda' || aba === 'plano') && (
+        {(aba === 'hoje' || aba === 'agenda' || aba === 'plano' || aba === 'vagas') && (
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: -8 }}>
             <button className="btn pequeno" onClick={() => setConfig(true)} aria-label="Configuracoes"><Icon nome="config" tam={18} /></button>
           </div>
         )}
-        {aba === 'hoje' && <Hoje data={hoje} irParaPlano={() => setAba('plano')} />}
+        {aba === 'hoje' && <Hoje data={hoje} irParaPlano={() => setAba('plano')} irParaVagas={(s) => { setSubVagas(s); setAba('vagas') }} />}
         {aba === 'agenda' && <Agenda data={dataAgenda} setData={setDataAgenda} />}
         {aba === 'plano' && <Plano />}
+        {aba === 'vagas' && <Vagas sub={subVagas} setSub={setSubVagas} />}
         {aba === 'metas' && <Metas />}
         {aba === 'historico' && <Historico data={hoje} />}
       </div>
 
-      <button className="fab" onClick={() => setNovaTarefa(true)} aria-label="Nova tarefa"><Icon nome="mais" tam={28} /></button>
+      {/* Na aba Vagas o + de tarefa teria significado errado: la o botao e "Nova vaga". */}
+      {aba !== 'vagas' && (
+        <button className="fab" onClick={() => setNovaTarefa(true)} aria-label="Nova tarefa"><Icon nome="mais" tam={28} /></button>
+      )}
 
       <nav className="tabbar">
         {ABAS.map((a) => (

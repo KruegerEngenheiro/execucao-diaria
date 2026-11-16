@@ -1,5 +1,5 @@
 // Componentes visuais reutilizados: folha modal, barra de progresso e anel de score.
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Icon } from './Icon'
 
 export function Folha({ titulo, onFechar, children }: { titulo: string; onFechar: () => void; children: ReactNode }) {
@@ -54,5 +54,68 @@ export function Vazio({ icone, texto }: { icone: string; texto: string }) {
       <div className="ic"><Icon nome={icone} tam={34} /></div>
       <div>{texto}</div>
     </div>
+  )
+}
+
+// Estado de carregamento. Existe para a tela nao mostrar "vazio" ou zero enquanto
+// o dado ainda nao chegou (um zero falso esconde candidatura pendente).
+export function Carregando({ texto = 'Carregando...' }: { texto?: string }) {
+  return (
+    <div className="vazio" role="status" aria-live="polite">
+      <div>{texto}</div>
+    </div>
+  )
+}
+
+// Estado de erro com acao de tentar de novo.
+export function ErroBloco({ texto, onTentar }: { texto: string; onTentar?: () => void }) {
+  return (
+    <div className="aviso erro" role="alert">
+      <div>{texto}</div>
+      {onTentar && (
+        <button className="btn pequeno" style={{ marginTop: 10 }} onClick={onTentar}>Tentar de novo</button>
+      )}
+    </div>
+  )
+}
+
+// Confirmacao propria, no lugar do confirm() nativo. Bloqueia clique duplo
+// enquanto a acao roda e mostra o erro se ela falhar.
+export function ConfirmaAcao({
+  titulo, texto, rotuloConfirmar = 'Confirmar', perigo = false, onConfirmar, onCancelar,
+}: {
+  titulo: string
+  texto: string
+  rotuloConfirmar?: string
+  perigo?: boolean
+  onConfirmar: () => void | Promise<void>
+  onCancelar: () => void
+}) {
+  const [ocupado, setOcupado] = useState(false)
+  const [erro, setErro] = useState('')
+
+  async function confirmar() {
+    if (ocupado) return
+    setOcupado(true)
+    setErro('')
+    try {
+      await onConfirmar()
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Nao consegui concluir.')
+      setOcupado(false)
+    }
+  }
+
+  return (
+    <Folha titulo={titulo} onFechar={ocupado ? () => {} : onCancelar}>
+      <div style={{ fontSize: 15, lineHeight: 1.45, marginBottom: 14 }}>{texto}</div>
+      {erro && <ErroBloco texto={erro} />}
+      <div className="linha-btns">
+        <button className="btn" onClick={onCancelar} disabled={ocupado}>Cancelar</button>
+        <button className={`btn ${perigo ? 'perigo' : 'pri'}`} onClick={confirmar} disabled={ocupado}>
+          {ocupado ? 'Aguarde...' : rotuloConfirmar}
+        </button>
+      </div>
+    </Folha>
   )
 }
